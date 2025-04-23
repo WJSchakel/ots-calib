@@ -1,6 +1,3 @@
-..
-    Edited on https://rsted.info.ucl.ac.be/
-
 Introduction
 ===============
 Welcome to **ots-calib**, a calibration tool with both general optimization features, and features
@@ -59,3 +56,6 @@ Acknowledgement
 The initial version of this calibration pipeline was built as part of two projects: i4Driving (TU 
 Delft, PANTEIA, UNINA, VTI, CTAG, ZF, RDW, TUM, TH AB, CNR-ISTC, DNDE, TJU, UI, UQ, SWISS RE LTD, 
 OUW) and Fosim-OTS (TU Delft, Enigmatry, Rijkswaterstaat).
+
+..
+    Edited on https://rsted.info.ucl.ac.be/
