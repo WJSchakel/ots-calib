@@ -13,40 +13,40 @@ Structure
 The overall structure of the project code is as follows:
 
 - Module **parameters** includes ``Parameters`` which holds one or more ``Parameter`` objects. Each
-parameters is defined with an initial value and applicable range. Each parameter holds a value that
-is optimized.
+  parameters is defined with an initial value and applicable range. Each parameter holds a value 
+  that is optimized.
 
 - Module **calibration** holds various optimization algorithms, which optionally derive from
-``Calibration`` (link to ``error_function`` and ``console``) or ``AbstractCalibration``
-(skips evaluation of same parameters).
+  ``Calibration`` (link to ``error_function`` and ``console``) or ``AbstractCalibration``
+  (skips evaluation of same parameters).
 
 - Module **console** holds a simple console that prints on the environment console. It can show
-status values and progress of processes, depending on what other components are requesting to be
-shown.
+  status values and progress of processes, depending on what other components are requesting to be
+  shown.
 
 - Module **error_function** contains generic functions based on underlying empirical and simulated
-values. It also contains ``SeededErrorFunction`` using a ``Seed`` object and underlying error
-function.
+  values. It also contains ``SeededErrorFunction`` using a ``Seed`` object and underlying error
+  function.
 
 - Module **kpi** contains kpi's that transform data into values that feed the error functions.
-The simplest type is ``DataValue``, which takes a single value from data.
+  The simplest type is ``DataValue``, which takes a single value from data.
 
 - Module **data** contains data classes that provide data in the form of a pandas ``DataFrame``.
-This data can come from a file, which may or may not be pre-processed, and may or may not come from
-an underlying simulation.
+  This data can come from a file, which may or may not be pre-processed, and may or may not come 
+  from an underlying simulation.
 
 - Module **filter** contains methods to filter data. Similarly to ``data``, these classes provide a
-``DataFrame``, and can hence be used as the basis for kpi's. Of particular interest is
-``SpaceTimeRegion`` which contains methods to provide theoretically sensible traffic statistics
-over a space-time region.
+  ``DataFrame``, and can hence be used as the basis for kpi's. Of particular interest is
+  ``SpaceTimeRegion`` which contains methods to provide theoretically sensible traffic statistics
+  over a space-time region.
 
 - Module **path** contains a combined pre-processing and filtering to supply data relevant to a
-path, defined by a set of lanes in simulation. This too can be directly used as data supplying a
-``DataFrame``.
+  path, defined by a set of lanes in simulation. This too can be directly used as data supplying a
+  ``DataFrame``.
 
 - Module **simulation** contains a class that combines a seed and parameters, and invokes a
-simulation run when new simulation files are required. Implementations of this class will be
-use-case specific.
+  simulation run when new simulation files are required. Implementations of this class will be
+  use-case specific.
 
 Both ``error_function``'s and ``kpi``'s extend ``Value``, which ``Calibration`` expects as error
 function. Any supporting structure of error functions and kpi's can be used to feed the error value
