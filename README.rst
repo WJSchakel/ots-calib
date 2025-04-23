@@ -57,7 +57,7 @@ Demos
 Demo's can be found in the demo folder.
 
 - **linear_fit** is a simple optimization comparing a simulated linear equation with a little noise
-to a data file, using both a grid-search, and a cross-search.
+  to a data file, using both a grid-search, and a cross-search.
 
 Acknowledgement
 ===============
