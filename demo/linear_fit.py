@@ -8,7 +8,7 @@ import time
 
 from pandas.core.frame import DataFrame
 
-from ots_calib.calibration import GridSearch, CrossSearch
+from ots_calib.calibration import GridSearch, CrossSearch, GeneticSearch
 from ots_calib.console import Console
 from ots_calib.data import File, SimulationFile
 from ots_calib.error_function import SumOfSquares, SeededErrorFunction, Seed
@@ -80,4 +80,21 @@ if __name__ == '__main__':
     fit = CrossSearch(error_function, console).calibrate(parameters)
     t1 = time.time() - t0
     print(f'fit: {fit}')
+    print(f'a={parameters.get_value("a")}, b={parameters.get_value("b")} in {t1}s')
+
+    # Calibration with Genetic Algorithm
+    parameters.set_initial()  # reset to starting values
+    ga = GeneticSearch(# you can tweak these numbers
+            error_function,
+            console,
+            pop_size=20,
+            generations=20,
+            crossover_rate=0.9,
+            mutation_rate=0.05,
+            seed=42
+    )
+    t0 = time.time()
+    fit = ga.calibrate(parameters)
+    t1 = time.time() - t0
+    print(f'GA fit: {fit}')
     print(f'a={parameters.get_value("a")}, b={parameters.get_value("b")} in {t1}s')

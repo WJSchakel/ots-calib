@@ -3,6 +3,8 @@ Calibration template with default implementations.
 
 @author: wjschakel
 """
+import random
+import copy
 from abc import ABC, abstractmethod
 
 from ots_calib.console import Console
@@ -243,3 +245,144 @@ class GridSearch(AbstractCalibration):
         if isinstance(self._steps, int):
             return self._steps
         return self._steps[parameter_id]
+
+
+class GeneticSearch(AbstractCalibration):
+    """
+    Calibrate Parameters with a simple Genetic Algorithm.
+
+    :param pop_size:   individuals per generation
+    :param generations: number of generations
+    :param crossover_rate: probability of crossover
+    :param mutation_rate:  probability of per-gene mutation
+    :param console:   ots_calib Console for progress
+    """
+
+    def __init__(
+        self,
+        error_function,
+        console=None,
+        pop_size: int=50,
+        generations: int=40,
+        crossover_rate: float=0.9,
+        mutation_rate: float=0.05,
+        seed: int | None=None,
+    ):
+        super().__init__(error_function, console)
+        self.pop_size = pop_size
+        self.generations = generations
+        self.crossover_rate = crossover_rate
+        self.mutation_rate = mutation_rate
+        self._rng = random.Random(seed)
+
+    # ------------------------------------------------ helpers
+    def _encode(self, pars: Parameters) -> list[float]:
+        """Parameter → genome (0-1 scaling)."""
+        return [
+            (p.get_value() - p.get_minimum()) /
+            (p.get_maximum() - p.get_minimum())
+            for p in pars
+        ]
+
+    def _decode(self, genome: list[float], template: Parameters) -> Parameters:
+        """Genome → fresh Parameters object."""
+        new_pars: Parameters = copy.deepcopy(template)
+        for g, p in zip(genome, new_pars):
+            lo = p.get_minimum()
+            hi = p.get_maximum()
+            p.set_value(lo + g * (hi - lo))
+        return new_pars
+
+    def calibrate(self, parameters: Parameters) -> float:
+        """Run GA; updates *parameters* to best found & returns best error."""
+
+        # 1  create a progress bar and get its id
+        proc_id = self._console.create_process("Genetic Search")
+
+        # -------- initial population  ----------------------------------
+
+        gene_ids = parameters.get_ids()  # tuple of parameter names
+        n_genes = len(gene_ids)  # 2 for the demo (a, b)
+
+        population: list[list[float]] = [
+            [self._rng.random() for _ in range(n_genes)]  # one genome
+            for _ in range(self.pop_size)  # whole population
+        ]
+        best_err = float("inf")
+        best_genome: list[float] | None = None
+
+        # -------- evolutionary loop  -----------------------------------
+        for gen in range(self.generations):
+            fitness: list[float] = []
+            for genome in population:
+                pars_i = self._decode(genome, parameters)
+                err = self._error_function.get_value(pars_i)
+                # fitness.append(-err)
+                fitness.append(1.0 / (1.0 + err))  # scales to (0 , 1]
+                if err < best_err:
+                    best_err, best_genome = err, genome
+
+            # 2  update progress bar  (value between 0.0 and 1.0)
+            self._console.show_progress(
+                proc_id,
+                progress=(gen + 1) / self.generations,
+                label=f"GA gen {gen + 1}/{self.generations}",
+            )
+
+            # -------- selection / variation (unchanged) -----------------
+            total_fit = sum(fitness)
+            pick = lambda: population[self._roulette(fitness, total_fit)]
+
+            new_pop: list[list[float]] = []
+            while len(new_pop) < self.pop_size:
+                p1, p2 = pick(), pick()
+                c1, c2 = p1[:], p2[:]
+                if self._rng.random() < self.crossover_rate:
+                    self._sbx(c1, c2)
+                self._mutate(c1)
+                self._mutate(c2)
+                new_pop.extend([c1, c2])
+            # ---------- elitism (keep the very best genome) --------------
+            elite = population[fitness.index(max(fitness))]  # best of old pop
+            new_pop[0] = elite                               # overwrite slot 0
+            
+            population = new_pop[: self.pop_size]
+
+        # 3  close the progress bar
+        self._console.remove_process(proc_id)
+
+        # -------- copy the best genome into *parameters* -----------------
+        best_pars = self._decode(best_genome, parameters)  # fresh clone
+        for p_src, p_dst in zip(best_pars, parameters):  # same order
+            p_dst.set_value(p_src.get_value())  # overwrite
+
+        return best_err
+
+    # ---------------------------------------------------- GA operators
+    def _roulette(self, fitness: list[float], total: float) -> int:
+        t = self._rng.random() * total
+        s = 0.0
+        for idx, f in enumerate(fitness):
+            s += f
+            if s >= t:
+                return idx
+        return len(fitness) - 1
+
+    def _sbx(self, g1: list[float], g2: list[float], eta: float=2.0):
+        """Simulated-Binary Crossover (modifies genomes in place)."""
+        for i in range(len(g1)):
+            if self._rng.random() < 0.5:
+                if abs(g1[i] - g2[i]) > 1e-12:
+                    x1, x2 = sorted([g1[i], g2[i]])
+                    beta = 1.0 + (2.0 * (x1) / (x2 - x1))
+                    beta **= -(eta + 1)
+                    c1 = 0.5 * (x1 + x2 - beta * (x2 - x1))
+                    c2 = 0.5 * (x1 + x2 + beta * (x2 - x1))
+                    g1[i], g2[i] = min(max(c1, 0.0), 1.0), min(max(c2, 0.0), 1.0)
+
+    def _mutate(self, g: list[float], eta: float=5.0):
+        for i in range(len(g)):
+            if self._rng.random() < self.mutation_rate:
+                delta = (self._rng.random() - 0.5) / (eta)
+                g[i] = min(max(g[i] + delta, 0.0), 1.0)
+
