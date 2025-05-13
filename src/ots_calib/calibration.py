@@ -5,6 +5,8 @@ Calibration template with default implementations.
 """
 import random
 import copy
+# import pygad
+# import numpy as np
 from abc import ABC, abstractmethod
 
 from ots_calib.console import Console
@@ -286,12 +288,12 @@ class GeneticSearch(AbstractCalibration):
 
     def _decode(self, genome: list[float], template: Parameters) -> Parameters:
         """Genome → fresh Parameters object."""
-        new_pars: Parameters = copy.deepcopy(template)
-        for g, p in zip(genome, new_pars):
+        # new_pars: Parameters = copy.deepcopy(template)
+        for g, p in zip(genome, template):
             lo = p.get_minimum()
             hi = p.get_maximum()
             p.set_value(lo + g * (hi - lo))
-        return new_pars
+        return template
 
     def calibrate(self, parameters: Parameters) -> float:
         """Run GA; updates *parameters* to best found & returns best error."""
@@ -309,7 +311,7 @@ class GeneticSearch(AbstractCalibration):
             for _ in range(self.pop_size)  # whole population
         ]
         best_err = float("inf")
-        best_genome: list[float] | None = None
+        best_genome: list[float] | None = None #### 
 
         # -------- evolutionary loop  -----------------------------------
         for gen in range(self.generations):
@@ -318,7 +320,7 @@ class GeneticSearch(AbstractCalibration):
                 pars_i = self._decode(genome, parameters)
                 err = self._error_function.get_value(pars_i)
                 # fitness.append(-err)
-                fitness.append(1.0 / (1.0 + err))  # scales to (0 , 1]
+                fitness.append(1-1.0 /(1.0 + err))  # scales to (0 , 1]
                 if err < best_err:
                     best_err, best_genome = err, genome
 
@@ -343,9 +345,9 @@ class GeneticSearch(AbstractCalibration):
                 self._mutate(c2)
                 new_pop.extend([c1, c2])
             # ---------- elitism (keep the very best genome) --------------
-            elite = population[fitness.index(max(fitness))]  # best of old pop
-            new_pop[0] = elite                               # overwrite slot 0
-            
+            # elite = population[fitness.index(max(fitness))]  # best of old pop
+            # new_pop[0] = elite  # overwrite slot 0
+
             population = new_pop[: self.pop_size]
 
         # 3  close the progress bar
@@ -353,11 +355,10 @@ class GeneticSearch(AbstractCalibration):
 
         # -------- copy the best genome into *parameters* -----------------
         best_pars = self._decode(best_genome, parameters)  # fresh clone
-        for p_src, p_dst in zip(best_pars, parameters):  # same order
-            p_dst.set_value(p_src.get_value())  # overwrite
-
-        return best_err
-
+        # for p_src, p_dst in zip(best_pars, parameters):  # same order
+        #     p_dst.set_value(p_src.get_value())  # overwrite
+        #
+        return best_pars
     # ---------------------------------------------------- GA operators
     def _roulette(self, fitness: list[float], total: float) -> int:
         t = self._rng.random() * total
