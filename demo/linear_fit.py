@@ -68,30 +68,30 @@ if __name__ == '__main__':
     console = Console(do_log=False, do_gui=True)
 
     # Calibration by GridSearch
-    t0 = time.time()
-    fit = GridSearch(error_function, console, steps=10).calibrate(parameters)
-    t1 = time.time() - t0
-    print(f'fit: {fit}')
-    print(f'a={parameters.get_value("a")}, b={parameters.get_value("b")} in {t1}s')
+    # t0 = time.time()
+    # fit = GridSearch(error_function, console, steps=10).calibrate(parameters)
+    # t1 = time.time() - t0
+    # print(f'fit: {fit}')
+    # print(f'a={parameters.get_value("a")}, b={parameters.get_value("b")} in {t1}s')
 
-    # Calibration by CrossSearch
-    parameters.set_initial()
-    t0 = time.time()
-    fit = CrossSearch(error_function, console).calibrate(parameters)
-    t1 = time.time() - t0
-    print(f'fit: {fit}')
-    print(f'a={parameters.get_value("a")}, b={parameters.get_value("b")} in {t1}s')
+    # # Calibration by CrossSearch
+    # parameters.set_initial()
+    # t0 = time.time()
+    # fit = CrossSearch(error_function, console).calibrate(parameters)
+    # t1 = time.time() - t0
+    # print(f'fit: {fit}')
+    # print(f'a={parameters.get_value("a")}, b={parameters.get_value("b")} in {t1}s')
 
     # Calibration with Genetic Algorithm
     parameters.set_initial()  # reset to starting values
     ga = GeneticSearch(# you can tweak these numbers
             error_function,
             console,
-            pop_size=40,
+            pop_size=20,
             generations=20,
-            crossover_rate=0.1,
+            crossover_rate=0.9,
             mutation_rate=0.05,
-            seed=42
+            seed=10
     )
     t0 = time.time()
     fit = ga.calibrate(parameters)
