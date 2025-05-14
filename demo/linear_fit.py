@@ -87,9 +87,9 @@ if __name__ == '__main__':
     ga = GeneticSearch(# you can tweak these numbers
             error_function,
             console,
-            pop_size=20,
+            pop_size=40,
             generations=20,
-            crossover_rate=0.9,
+            crossover_rate=0.1,
             mutation_rate=0.05,
             seed=42
     )
