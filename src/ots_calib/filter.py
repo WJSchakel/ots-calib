@@ -104,13 +104,13 @@ class SpaceTimeRegion(Filter):
         Name of the column containing a unique series value for each part during which the vehicle
         is in the path.
 
-    _column : str
+    _col_t : str
         Name of the time column.
 
-    _min : float
+    _min_t : float
         Minimum time value of the space-time region.
 
-    _max : float
+    _max_t : float
         Maximum time value of the space-time region.
 
     _col_x : str
@@ -144,9 +144,9 @@ class SpaceTimeRegion(Filter):
         super().__init__(underlying_data)
         self._vehicle_id_column = vehicle_id_column
         self._series_column = series_column
-        self._column = col_t
-        self._min = min_t
-        self._max = max_t
+        self._col_t = col_t
+        self._min_t = min_t
+        self._max_t = max_t
         self._col_x = col_x
         self._min_x = min_x
         self._max_x = max_x
@@ -162,7 +162,7 @@ class SpaceTimeRegion(Filter):
         self._reset_on_new_underlying_data()
         if not self._path_data_frame:
             df = self._underlying_data_frame
-            in_t = df[self._column] >= self._min & df[self._column] <= self._max
+            in_t = df[self._col_t] >= self._min_t & df[self._col_t] <= self._max
             in_x = df[self._col_x] >= self._min_x & df[self._col_x] <= self._max_x
             self._path_data_frame = df[in_t & in_x]
         return self._path_data_frame
@@ -171,7 +171,7 @@ class SpaceTimeRegion(Filter):
         """
         Returns the area of the region (time x space).
         """
-        return (self._max - self._min) * (self._max_x - self._min_x)
+        return (self._min_t - self._min_t) * (self._max_x - self._min_x)
 
     def get_total_time_spent(self) -> float:
         """
@@ -236,68 +236,68 @@ class SpaceTimeRegion(Filter):
                                                   == vehicle_id]
 
                 # First vehicle data in space-time region
-                index_first = region_veh_data[self._column].idxmin()
-                t_in = region_veh_data[self._column].iloc[index_first]
+                index_first = region_veh_data[self._col_t].idxmin()
+                t_in = region_veh_data[self._col_t].iloc[index_first]
                 x_in = region_veh_data[self._col_x].iloc[index_first]
                 series_in = all_veh_data[self._series_column].iloc[index_first]
                 t_first = t_in
 
                 # If the vehicle existed before, interpolate
-                is_before_t = all_veh_data[self._column] < self._min
+                is_before_t = all_veh_data[self._col_t] < self._min_t
                 is_before_x = all_veh_data[self._col_x] < self._min_x
                 is_same_series_before = all_veh_data[self._series_column] == series_in
                 before = all_veh_data.loc[(is_before_t | is_before_x) & is_same_series_before]
                 if before:
-                    index_before = before[self._column].idxmax()
-                    t_before = before[self._column].iloc[index_before]
+                    index_before = before[self._col_t].idxmax()
+                    t_before = before[self._col_t].iloc[index_before]
                     x_before = before[self._col_x].iloc[index_before]
                     v = (x_in - x_before) / (t_in - t_before)
                     t_x = t_before + (self._min_x - x_before) / v
-                    if t_x < self._min:
-                        t_in = self._min
-                        x_in = x_before + (self._min - t_before) * v
+                    if t_x < self._min_t:
+                        t_in = self._min_t
+                        x_in = x_before + (self._min_t - t_before) * v
                     else:
                         t_in = t_x
                         x_in = self._min_x
 
                 # Last vehicle data in space-time region
-                index_last = region_veh_data[self._column].idxmax()
-                t_out = region_veh_data[self._column].iloc[index_last]
+                index_last = region_veh_data[self._col_t].idxmax()
+                t_out = region_veh_data[self._col_t].iloc[index_last]
                 x_out = region_veh_data[self._col_x].iloc[index_last]
                 series_out = all_veh_data[self._series_column].iloc[index_last]
                 t_last = t_out
 
                 # If the vehicle existed after, interpolate
-                is_after_t = all_veh_data[self._column] > self._max
+                is_after_t = all_veh_data[self._col_t] > self._max_t
                 is_after_x = all_veh_data[self._col_x] > self._max_x
                 is_same_series_after = all_veh_data[self._series_column] == series_out
                 after = all_veh_data.loc[(is_after_t | is_after_x) & is_same_series_after]
                 if after:
-                    index_after = after[self._column].idxmin()
-                    t_after = after[self._column].iloc[index_after]
+                    index_after = after[self._col_t].idxmin()
+                    t_after = after[self._col_t].iloc[index_after]
                     x_after = after[self._col_x].iloc[index_after]
                     v = (x_after - x_out) / (t_after - t_out)
                     t_x = t_out + (self._max_x - x_out) / v
-                    if t_x < self._max:
+                    if t_x < self._max_t:
                         t_out = t_x
                         x_out = self._max_x
                     else:
-                        t_out = self._max
-                        x_out = x_out + (self._max - t_out) * v
+                        t_out = self._max_t
+                        x_out = x_out + (self._min_t - t_out) * v
 
                 # Loop series
                 for series in set(region_veh_data[self._series_column]):
                     series_data = region_veh_data.loc[region_veh_data[self._series_column]
                                                       == series]
-                    index_min = series_data[self._column].idxmin()
-                    t0 = series_data[self._column].iloc[index_min]
+                    index_min = series_data[self._col_t].idxmin()
+                    t0 = series_data[self._col_t].iloc[index_min]
                     x0 = series_data[self._col_x].iloc[index_min]
                     if t0 == t_first:
                         t0 = t_in
                         x0 = x_in
 
-                    index_max = series_data[self._column].idxmax()
-                    t1 = series_data[self._column].iloc[index_max]
+                    index_max = series_data[self._col_t].idxmax()
+                    t1 = series_data[self._col_t].iloc[index_max]
                     x1 = series_data[self._col_x].iloc[index_max]
                     if t1 == t_last:
                         t1 = t_out
