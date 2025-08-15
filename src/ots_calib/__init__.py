@@ -4,5 +4,5 @@
 Calibration pipeline for OTS.
 """
 
-# Version of the pydsol-core package
+# Version
 __version__ = "0.0.1"
