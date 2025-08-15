@@ -243,3 +243,14 @@ class GridSearch(AbstractCalibration):
         if isinstance(self._steps, int):
             return self._steps
         return self._steps[parameter_id]
+    
+class Genetic(AbstractCalibration):
+    
+    
+    
+    def __init__(self, error_function: Value, console: Console, population_size: int=30):
+        """
+        Constructor.
+        """
+        super().__init__(error_function, console)
+        self._population_size = population_size
